@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Happy Birthday Rezvaneh 🎉</title>
+  <style>
+    :root{
+      --bg1:#0f1020; --bg2:#24143a; --bg3:#431a5f; --accent:#ffd166;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Naskh Arabic UI", "Noto Sans Arabic", sans-serif;
+      background: radial-gradient(1200px 800px at 50% 120%, var(--bg3), var(--bg2) 40%, var(--bg1) 70%);
+      color:#fff; overflow:hidden; position:relative;
+    }
+
+    .stage{position:absolute; inset:0; display:grid; place-items:center; padding:20px; text-align:center;}
+
+    .message{line-height:1.5; text-shadow: 0 2px 12px rgba(0,0,0,.35);}
+    .en{font-size: clamp(24px, 5vw, 48px); font-weight:800; letter-spacing:.06em;}
+    .fa{font-size: clamp(18px, 4vw, 32px); font-weight:700; margin-top:.35em;}
+    .extra{font-size: clamp(16px, 3.5vw, 28px); font-weight:600; margin-top:.5em; opacity:0; transition: opacity 1.5s;}
+
+    .spark{ position: relative; display:inline-block }
+    .spark::after{ content:""; position:absolute; left:0; right:0; bottom:-.3em; height:3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      filter: blur(1px); opacity:.8; }
+
+    .balloons{ position:absolute; inset:0; overflow:hidden; pointer-events:none }
+    .balloon{
+      position:absolute;
+      bottom:-20vh;
+      width:60px;
+      height:90px;
+      background: url('/balloon.png') no-repeat center/contain;
+      animation: floatAndSway linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes floatAndSway {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      25%  { transform: translate(-10px, -25vh) rotate(-3deg); }
+      50%  { transform: translate(0, -50vh) rotate(0deg); }
+      75%  { transform: translate(10px, -75vh) rotate(3deg); }
+      100% { transform: translate(0, -130vh) rotate(0deg); }
+    }
+
+    .balloon:nth-child(1){ left:5%;  animation-duration:12s; animation-delay:-2s }
+    .balloon:nth-child(2){ left:15%; animation-duration:13s; animation-delay:-5s }
+    .balloon:nth-child(3){ left:25%; animation-duration:14s; animation-delay:-8s }
+    .balloon:nth-child(4){ left:35%; animation-duration:12s; animation-delay:-3s }
+    .balloon:nth-child(5){ left:45%; animation-duration:13s; animation-delay:-7s }
+    .balloon:nth-child(6){ left:55%; animation-duration:14s; animation-delay:-6s }
+    .balloon:nth-child(7){ left:65%; animation-duration:12s; animation-delay:-4s }
+    .balloon:nth-child(8){ left:75%; animation-duration:13s; animation-delay:-9s }
+    .balloon:nth-child(9){ left:85%; animation-duration:14s; animation-delay:-1s }
+    .balloon:nth-child(10){left:95%; animation-duration:12s; animation-delay:-10s }
+
+    canvas#fx{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none }
+
+    .btn{
+      position: absolute; bottom:24px; margin:auto; width:max-content; padding:.6em 1.1em; border-radius:999px;
+      background: rgba(0,0,0,.55); color:#fff; font:600 15px/1 system-ui, sans-serif; backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,.25);
+      cursor:pointer; box-shadow: 0 10px 25px rgba(0,0,0,.35); transition:.3s; }
+    #tapToPlay{ left:24px; opacity:0; transform: translateY(8px); }
+    #tapToPlay.show{ opacity:1; transform:none }
+    #stopMusic{ left:120px; }
+    #resumeMusic{ left:220px; }
+    #volumeDown{ right:120px; }
+    #volumeUp{ right:24px; }
+  </style>
+</head>
+<body>
+  <div class="balloons" aria-hidden="true">
+    <div class="balloon"></div><div class="balloon"></div><div class="balloon"></div><div class="balloon"></div>
+    <div class="balloon"></div><div class="balloon"></div><div class="balloon"></div><div class="balloon"></div>
+    <div class="balloon"></div><div class="balloon"></div>
+  </div>
+
+  <canvas id="fx"></canvas>
+
+  <main class="stage">
+    <div class="message">
+      <div class="en"><span class="spark">Happy Birthday REZVANEH</span> 🎂</div>
+      <div class="fa">«تولدت مبارک رضوانه جانم» 🎉</div>
+      <div class="extra" id="extraText">تولدت مبارک با صد هزار تا بوسه<br>عشق منی عزیزم نذار دلم بپوسه</div>
+    </div>
+  </main>
+
+  <audio id="bgm" src="https://dl.musictaj.com/song403/bhr/Andy%20-%20Tavalod.mp3" preload="auto" loop></audio>
+  <button class="btn" id="tapToPlay" type="button">▶️ پخش موسیقی</button>
+  <button class="btn" id="stopMusic" type="button">⏸ توقف</button>
+  <button class="btn" id="resumeMusic" type="button">▶️ ادامه</button>
+  <button class="btn" id="volumeDown" type="button">🔉 -</button>
+  <button class="btn" id="volumeUp" type="button">🔊 +</button>
+
+  <script>
+    const audio = document.getElementById('bgm');
+    const tap = document.getElementById('tapToPlay');
+    const stopBtn = document.getElementById('stopMusic');
+    const resumeBtn = document.getElementById('resumeMusic');
+    const volDown = document.getElementById('volumeDown');
+    const volUp = document.getElementById('volumeUp');
+    const extraText = document.getElementById('extraText');
+
+    async function tryPlay(){
+      try {
+        audio.volume = 0.3;
+        await audio.play();
+        tap.classList.remove('show');
+      } catch(e){
+        tap.classList.add('show');
+      }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      tryPlay();
+      setTimeout(()=> extraText.style.opacity = 1, 5000);
+    });
+    tap.addEventListener('click', tryPlay);
+    stopBtn.addEventListener('click', ()=>{ audio.pause(); });
+    resumeBtn.addEventListener('click', ()=>{ audio.play(); });
+    volDown.addEventListener('click', ()=>{ audio.volume = Math.max(0, audio.volume - 0.1); });
+    volUp.addEventListener('click', ()=>{ audio.volume = Math.min(1, audio.volume + 0.1); });
+
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d');
+    let dpr = Math.max(1, window.devicePixelRatio || 1);
+
+    function resize(){
+      canvas.width = Math.floor(canvas.clientWidth * dpr);
+      canvas.height = Math.floor(canvas.clientHeight * dpr);
+    }
+    resize();
+    addEventListener('resize', resize);
+
+    class Particle{
+      constructor(x,y,hue){
+        const angle = Math.random()*Math.PI*2;
+        const speed = Math.random()*7+4;
+        this.x=x; this.y=y;
+        this.vx=Math.cos(angle)*speed;
+        this.vy=Math.sin(angle)*speed;
+        this.life=70+Math.random()*40;
+        this.size=1+Math.random()*3;
+        this.hue=hue+(Math.random()*40-20);
+        this.alpha=1;
+      }
+      step(){
+        this.vy += 0.04;
+        this.vx *= 0.985; this.vy *= 0.985;
+        this.x += this.vx; this.y += this.vy;
+        this.life--; this.alpha=Math.max(0,this.life/120);
+        return this.life>0;
+      }
+      draw(){
+        ctx.globalCompositeOperation='lighter';
+        ctx.fillStyle=`hsla(${this.hue},100%,65%,${this.alpha})`;
+        ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    let particles=[];
+    function burst(cx,cy){
+      const hue=Math.random()*360;
+      for(let i=0;i<150;i++) particles.push(new Particle(cx,cy,hue));
+      const boom=new Audio('/e.m4a');
+      boom.volume=0.1;
+      boom.play();
+    }
+
+    function animate(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      particles=particles.filter(p=>{p.step();p.draw();return p.life>0});
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    function scheduleBursts(){
+      const cx=canvas.width/2, cy=canvas.height/2;
+      burst(cx,cy);
+      for(let i=0;i<4;i++) setTimeout(()=>{
+        const rx=cx+(Math.random()*2-1)*canvas.width*0.35;
+        const ry=cy+(Math.random()*2-1)*canvas.height*0.35;
+        burst(rx,ry);
+      },200+Math.random()*800);
+    }
+    scheduleBursts();
+    setInterval(scheduleBursts,2500);
+  </script>
+</body>
+</html>
